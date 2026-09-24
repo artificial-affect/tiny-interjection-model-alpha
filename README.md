@@ -16,7 +16,7 @@ Tiny Interjection Model Alpha (TIM) explores a small floor-control model for typ
 <done/>
 ```
 
-The repository contains a reproducible data pipeline, Qwen3 4B QLoRA training and evaluation code, a FastAPI decision endpoint, and a local `llama.cpp` runtime.
+The repository contains a reproducible data pipeline, Qwen3 4B QLoRA training and evaluation code, a FastAPI decision endpoint, and local `llama.cpp` and Ollama inference paths.
 
 ## Challenge status
 
@@ -192,6 +192,12 @@ The measured 200-step Serverless run took 37m 24s, including model downloads, bo
 See [nebius/README.md](nebius/README.md) for setup, monitoring, and security details.
 
 ## Demo
+
+Run the Ollama-backed interactive demo. The command resolves the managed Ollama CLI through `mycli` and starts the local Ollama service when needed:
+
+```bash
+make demo
+```
 
 Run the explicit heuristic smoke demo without model weights:
 
