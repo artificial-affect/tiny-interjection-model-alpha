@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+import json
 import subprocess
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from .data import is_backchannel, is_correction_or_redirect, is_incomplete_text
 from .format import build_prompt
-from .parser import parse_target_or_wait, target_to_text
+from .parser import parse_target, parse_target_or_wait, target_to_text
 from .schema import Event, Target
 from .train import DEFAULT_MODEL, load_model, load_tokenizer
 
@@ -68,6 +70,82 @@ def call_llama_cli(
     return result.stdout[start : end + len("<done/>")]
 
 
+def call_ollama(*, url: str, model: str, prompt: str, max_new_tokens: int):
+    """When Ollama inference is selected, request one raw TIM decision."""
+    body = json.dumps(
+        {
+            "model": model,
+            "prompt": prompt,
+            "raw": True,
+            "stream": False,
+            "think": False,
+            "keep_alive": "10m",
+            "options": {
+                "temperature": 0,
+                "seed": 1,
+                "num_ctx": 4096,
+                "num_predict": max_new_tokens,
+            },
+        }
+    ).encode()
+    request = urllib.request.Request(
+        f"{url}/api/generate",
+        data=body,
+        headers={"content-type": "application/json"},
+    )
+    with urllib.request.urlopen(request, timeout=120) as response:
+        payload = json.load(response)
+    raw = payload.get("response")
+    if not isinstance(raw, str):
+        raise RuntimeError("Ollama returned no TIM response.")
+    return raw
+
+
+def call_ollama_chat(*, url: str, model: str, events: tuple[Event, ...]):
+    """When TIM yields the floor, generate the human-facing chat response."""
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "Answer the user's request directly in at most three sentences unless "
+                "the user explicitly asks for a longer format."
+            ),
+        }
+    ]
+    for event in events:
+        if messages and messages[-1]["role"] == event.role:
+            messages[-1]["content"] += f"\n{event.text}"
+        else:
+            messages.append({"role": event.role, "content": event.text})
+    body = json.dumps(
+        {
+            "model": model,
+            "messages": messages,
+            "stream": False,
+            "think": False,
+            "keep_alive": "10m",
+            "options": {
+                "temperature": 0,
+                "seed": 1,
+                "num_ctx": 4096,
+                "num_predict": 256,
+            },
+        }
+    ).encode()
+    request = urllib.request.Request(
+        f"{url}/api/chat",
+        data=body,
+        headers={"content-type": "application/json"},
+    )
+    with urllib.request.urlopen(request, timeout=120) as response:
+        payload = json.load(response)
+    message = payload.get("message")
+    content = message.get("content") if isinstance(message, dict) else None
+    if not isinstance(content, str) or not content.strip():
+        raise RuntimeError("Ollama returned no chat response.")
+    return content.strip()
+
+
 def heuristic_decision(events: tuple[Event, ...]) -> Decision:
     if not events:
         target = Target(action="wait", messages=())
@@ -122,6 +200,8 @@ class InteractionEngine:
         llama_cli_path: Path | None = None,
         llama_model_path: Path | None = None,
         llama_adapter_path: Path | None = None,
+        ollama_model: str | None = None,
+        ollama_url: str = "http://127.0.0.1:11434",
     ) -> None:
         self.model_name = model_name
         self.adapter_dir = adapter_dir
@@ -129,15 +209,19 @@ class InteractionEngine:
         self.llama_cli_path = llama_cli_path
         self.llama_model_path = llama_model_path
         self.llama_adapter_path = llama_adapter_path
+        self.ollama_model = ollama_model
+        self.ollama_url = ollama_url
         llama_paths = (llama_cli_path, llama_model_path, llama_adapter_path)
         if any(llama_paths) and not all(llama_paths):
             raise ValueError("llama.cpp requires CLI, model, and adapter paths.")
+        if ollama_model and any(llama_paths):
+            raise ValueError("Select either Ollama or llama.cpp inference.")
         self.heuristic = heuristic
         self.use_4bit = use_4bit
         self.max_new_tokens = max_new_tokens
         self.model: Any | None = None
         self.tokenizer: Any | None = None
-        if not self.heuristic and self.llama_model_path is None:
+        if not self.heuristic and self.llama_model_path is None and not ollama_model:
             self._load_model()
 
     def _load_model(self) -> None:
@@ -170,6 +254,15 @@ class InteractionEngine:
                 max_new_tokens=self.max_new_tokens,
             )
             return Decision(target=parse_target_or_wait(raw), raw=raw, mode="llama.cpp")
+
+        if self.ollama_model:
+            raw = call_ollama(
+                url=self.ollama_url,
+                model=self.ollama_model,
+                prompt=build_prompt(events),
+                max_new_tokens=self.max_new_tokens,
+            )
+            return Decision(target=parse_target(raw), raw=raw, mode="ollama")
 
         if self.model is None or self.tokenizer is None:
             raise RuntimeError("Model is not loaded.")
