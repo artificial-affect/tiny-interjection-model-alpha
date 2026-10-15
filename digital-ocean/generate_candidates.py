@@ -203,7 +203,6 @@ Rules:
 
 
 def timing_error(example: dict[str, object], timing_range: tuple[str, int, int]) -> str:
-    """When balanced timing is requested, validate the final event delay."""
     timing_name, timing_min, timing_max = timing_range
     events = example.get("events")
     if not isinstance(events, list) or len(events) < 2:
@@ -220,7 +219,6 @@ def timing_error(example: dict[str, object], timing_range: tuple[str, int, int])
 def failure_focus_error(
     raw: dict[str, object], example: dict[str, object], expected_action: str
 ) -> str:
-    """When failure-focused generation is requested, validate its hard-case contract."""
     events = example.get("events")
     target = example.get("target")
     if not isinstance(events, list) or not events or not isinstance(target, dict):
@@ -393,7 +391,6 @@ def load_existing(path: Path) -> tuple[int, set[str], Counter[str]]:
 
 
 def next_case_index(*paths: Path) -> int:
-    """When generation resumes, continue after every recorded attempt ID."""
     highest = -1
     for path in paths:
         if not path.exists():

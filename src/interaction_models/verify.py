@@ -7,7 +7,7 @@ from typing import Any
 
 
 class VerificationError(AssertionError):
-    """Raised when an evaluation report fails the quality gate."""
+    pass
 
 
 def _metric(section: dict[str, Any], name: str) -> float:

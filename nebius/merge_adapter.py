@@ -5,7 +5,6 @@ from pathlib import Path
 
 
 def merge_adapter(base_model: str, adapter_dir: Path, output_dir: Path) -> None:
-    """When training passes, merge the LoRA into portable base-model weights."""
     import torch
     from peft import PeftModel
     from transformers import AutoModelForCausalLM, AutoTokenizer
