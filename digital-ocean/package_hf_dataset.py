@@ -20,7 +20,6 @@ from quality_candidates import quality_report
 
 
 def sha256(path: Path) -> str:
-    """When a dataset artifact needs provenance, calculate its SHA-256 digest."""
     digest = hashlib.sha256()
     with path.open("rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
@@ -29,7 +28,6 @@ def sha256(path: Path) -> str:
 
 
 def load_rows(path: Path) -> list[dict[str, Any]]:
-    """When validated candidates are packaged, load and verify every source row."""
     rows: list[dict[str, Any]] = []
     with path.open(encoding="utf-8") as handle:
         for line_number, line in enumerate(handle, start=1):
@@ -56,7 +54,6 @@ def load_rows(path: Path) -> list[dict[str, Any]]:
 def split_rows(
     rows: list[dict[str, Any]], validation_ratio: float
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """When a dataset is published, create stable action-stratified splits."""
     by_action: dict[str, list[dict[str, Any]]] = {}
     for row in rows:
         action = str(row["target"]["action"])
@@ -75,7 +72,6 @@ def split_rows(
 
 
 def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
-    """When rows are ready for Hugging Face, write deterministic JSONL."""
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:
         for row in rows:
@@ -83,7 +79,6 @@ def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
 
 
 def counts(rows: list[dict[str, Any]], field: str) -> dict[str, int]:
-    """When a manifest is built, count a named categorical field."""
     values: Counter[str] = Counter()
     for row in rows:
         if field == "action":
@@ -94,7 +89,6 @@ def counts(rows: list[dict[str, Any]], field: str) -> dict[str, int]:
 
 
 def dataset_card(teacher_model: str, train_count: int, validation_count: int) -> str:
-    """When a package is created, describe its provenance and safe initial use."""
     return f"""---
 configs:
 - config_name: default
@@ -137,7 +131,6 @@ def package_dataset(
     teacher_model: str,
     validation_ratio: float,
 ) -> dict[str, Any]:
-    """When candidates pass quality checks, package them for a private Hub repo."""
     rows = load_rows(input_path)
     train, validation = split_rows(rows, validation_ratio)
     train_path = output_dir / "data" / "train.jsonl"
@@ -172,7 +165,6 @@ def package_dataset(
 
 
 def verify_package(output_dir: Path) -> dict[str, Any]:
-    """When a packaged dataset is published, verify every recorded file hash."""
     manifest_path = output_dir / "metadata" / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     files = manifest.get("files")

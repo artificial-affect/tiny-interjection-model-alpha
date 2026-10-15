@@ -6,7 +6,6 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 
-# Retained locally and published externally. `make clean` must never remove these.
 data/raw/*
 data/processed/*
 runs/*

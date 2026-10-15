@@ -251,7 +251,6 @@ def target_to_text(target: dict[str, Any]) -> str:
 
 
 def format_prompt(events: list[dict[str, Any]]) -> str:
-    """When a dataset needs a prompt column, format only the instruction and event stream."""
     lines = [
         "You are a text interaction model for typed chat.",
         "Read the event stream, then emit exactly one floor-control action and any assistant messages.",
