@@ -29,7 +29,6 @@ def call_llama_cli(
     prompt: str,
     max_new_tokens: int,
 ):
-    """When local GGUF LoRA inference is selected, request one llama.cpp decision."""
     result = subprocess.run(
         [
             str(executable),
@@ -71,7 +70,6 @@ def call_llama_cli(
 
 
 def call_ollama(*, url: str, model: str, prompt: str, max_new_tokens: int):
-    """When Ollama inference is selected, request one raw TIM decision."""
     body = json.dumps(
         {
             "model": model,
@@ -102,7 +100,6 @@ def call_ollama(*, url: str, model: str, prompt: str, max_new_tokens: int):
 
 
 def call_ollama_chat(*, url: str, model: str, events: tuple[Event, ...]):
-    """When TIM yields the floor, generate the human-facing chat response."""
     messages = [
         {
             "role": "system",

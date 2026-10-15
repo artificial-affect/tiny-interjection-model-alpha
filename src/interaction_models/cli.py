@@ -20,7 +20,6 @@ def print_decision(engine: InteractionEngine, events: tuple[Event, ...]) -> None
 
 
 def ensure_ollama(url: str, executable: Path | None):
-    """When the demo needs Ollama, start it and wait until it is ready."""
     for attempt in range(61):
         try:
             with urllib.request.urlopen(f"{url}/api/tags", timeout=1):
@@ -40,7 +39,6 @@ def ensure_ollama(url: str, executable: Path | None):
 
 
 def print_demo_decision(decision, response: str | None):
-    """When filming the demo, show only the human-facing TIM result."""
     if decision.target.action == "wait":
         print("TIM: …")
         return

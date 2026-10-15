@@ -10,7 +10,7 @@ DONE_RE = re.compile(r"<done\s*/>", re.IGNORECASE)
 
 
 class TargetParseError(ValueError):
-    """Raised when model output cannot be parsed as an interaction target."""
+    pass
 
 
 def target_to_text(target: Target) -> str:
