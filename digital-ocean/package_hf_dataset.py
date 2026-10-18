@@ -21,51 +21,47 @@ from quality_candidates import quality_report
 
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+    with path.open('rb') as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b''):
             digest.update(chunk)
     return digest.hexdigest()
 
 
 def load_rows(path: Path) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
-    with path.open(encoding="utf-8") as handle:
+    with path.open(encoding='utf-8') as handle:
         for line_number, line in enumerate(handle, start=1):
             if not line.strip():
                 continue
             raw = extract_json_object(line)
             example = normalize_example(
                 raw,
-                source=str(raw.get("source") or "do-serverless-qwen35"),
-                case_id=str(raw.get("case_id") or f"qwen35-{line_number:06d}"),
+                source=str(raw.get('source') or 'do-serverless-qwen35'),
+                case_id=str(raw.get('case_id') or f'qwen35-{line_number:06d}'),
             )
             errors = validation_errors(example)
             errors.extend(quality_errors(example))
             if errors:
-                raise ValueError(f"Invalid row {line_number}: {', '.join(errors)}")
+                raise ValueError(f'Invalid row {line_number}: {", ".join(errors)}')
             example = add_training_text(example)
-            example["case_id"] = f"qwen35-{fingerprint(example)[:20]}"
+            example['case_id'] = f'qwen35-{fingerprint(example)[:20]}'
             rows.append(example)
     if not rows:
-        raise ValueError(f"No candidates found in {path}")
+        raise ValueError(f'No candidates found in {path}')
     return rows
 
 
-def split_rows(
-    rows: list[dict[str, Any]], validation_ratio: float
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def split_rows(rows: list[dict[str, Any]], validation_ratio: float) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     by_action: dict[str, list[dict[str, Any]]] = {}
     for row in rows:
-        action = str(row["target"]["action"])
+        action = str(row['target']['action'])
         by_action.setdefault(action, []).append(row)
 
     train: list[dict[str, Any]] = []
     validation: list[dict[str, Any]] = []
     for action_rows in by_action.values():
         ordered = sorted(action_rows, key=fingerprint)
-        validation_count = (
-            max(1, int(len(ordered) * validation_ratio)) if len(ordered) > 1 else 0
-        )
+        validation_count = max(1, int(len(ordered) * validation_ratio)) if len(ordered) > 1 else 0
         validation.extend(ordered[:validation_count])
         train.extend(ordered[validation_count:])
     return sorted(train, key=fingerprint), sorted(validation, key=fingerprint)
@@ -73,16 +69,16 @@ def split_rows(
 
 def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
+    with path.open('w', encoding='utf-8') as handle:
         for row in rows:
-            handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+            handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + '\n')
 
 
 def counts(rows: list[dict[str, Any]], field: str) -> dict[str, int]:
     values: Counter[str] = Counter()
     for row in rows:
-        if field == "action":
-            values[str(row["target"]["action"])] += 1
+        if field == 'action':
+            values[str(row['target']['action'])] += 1
         elif isinstance(row.get(field), str):
             values[str(row[field])] += 1
     return dict(sorted(values.items()))
@@ -133,70 +129,62 @@ def package_dataset(
 ) -> dict[str, Any]:
     rows = load_rows(input_path)
     train, validation = split_rows(rows, validation_ratio)
-    train_path = output_dir / "data" / "train.jsonl"
-    validation_path = output_dir / "data" / "validation.jsonl"
+    train_path = output_dir / 'data' / 'train.jsonl'
+    validation_path = output_dir / 'data' / 'validation.jsonl'
     write_jsonl(train_path, train)
     write_jsonl(validation_path, validation)
 
     manifest = {
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "teacher_model": teacher_model,
-        "source_sha256": sha256(input_path),
-        "validation_ratio": validation_ratio,
-        "train": len(train),
-        "validation": len(validation),
-        "action_counts": counts(rows, "action"),
-        "timing_counts": counts(rows, "timing_bucket"),
-        "quality": quality_report(input_path),
-        "files": {
-            "data/train.jsonl": sha256(train_path),
-            "data/validation.jsonl": sha256(validation_path),
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'teacher_model': teacher_model,
+        'source_sha256': sha256(input_path),
+        'validation_ratio': validation_ratio,
+        'train': len(train),
+        'validation': len(validation),
+        'action_counts': counts(rows, 'action'),
+        'timing_counts': counts(rows, 'timing_bucket'),
+        'quality': quality_report(input_path),
+        'files': {
+            'data/train.jsonl': sha256(train_path),
+            'data/validation.jsonl': sha256(validation_path),
         },
     }
-    metadata_path = output_dir / "metadata" / "manifest.json"
+    metadata_path = output_dir / 'metadata' / 'manifest.json'
     metadata_path.parent.mkdir(parents=True, exist_ok=True)
-    metadata_path.write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
-    (output_dir / "README.md").write_text(
-        dataset_card(teacher_model, len(train), len(validation)), encoding="utf-8"
-    )
+    metadata_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+    (output_dir / 'README.md').write_text(dataset_card(teacher_model, len(train), len(validation)), encoding='utf-8')
     return manifest
 
 
 def verify_package(output_dir: Path) -> dict[str, Any]:
-    manifest_path = output_dir / "metadata" / "manifest.json"
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    files = manifest.get("files")
+    manifest_path = output_dir / 'metadata' / 'manifest.json'
+    manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+    files = manifest.get('files')
     if not isinstance(files, dict) or not files:
-        raise ValueError(f"No file hashes found in {manifest_path}")
+        raise ValueError(f'No file hashes found in {manifest_path}')
     for relative_path, expected in files.items():
         path = output_dir / relative_path
         actual = sha256(path)
         if actual != expected:
-            raise ValueError(
-                f"Hash mismatch for {relative_path}: expected {expected}, got {actual}"
-            )
+            raise ValueError(f'Hash mismatch for {relative_path}: expected {expected}, got {actual}')
     return manifest
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Package validated TIM data for Hugging Face."
-    )
-    parser.add_argument("--input", type=Path)
-    parser.add_argument("--output-dir", type=Path, required=True)
-    parser.add_argument("--teacher-model", default="qwen3.5-397b-a17b")
-    parser.add_argument("--validation-ratio", type=float, default=0.15)
-    parser.add_argument("--verify-only", action="store_true")
+    parser = argparse.ArgumentParser(description='Package validated TIM data for Hugging Face.')
+    parser.add_argument('--input', type=Path)
+    parser.add_argument('--output-dir', type=Path, required=True)
+    parser.add_argument('--teacher-model', default='qwen3.5-397b-a17b')
+    parser.add_argument('--validation-ratio', type=float, default=0.15)
+    parser.add_argument('--verify-only', action='store_true')
     args = parser.parse_args()
     if args.verify_only:
         print(json.dumps(verify_package(args.output_dir), indent=2, sort_keys=True))
         return 0
     if args.input is None:
-        parser.error("--input is required unless --verify-only is set")
+        parser.error('--input is required unless --verify-only is set')
     if not 0 < args.validation_ratio < 1:
-        raise ValueError("--validation-ratio must be between 0 and 1")
+        raise ValueError('--validation-ratio must be between 0 and 1')
     manifest = package_dataset(
         args.input,
         args.output_dir,
@@ -207,5 +195,5 @@ def main() -> int:
     return 0
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     raise SystemExit(main())
