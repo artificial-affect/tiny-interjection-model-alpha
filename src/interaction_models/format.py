@@ -20,7 +20,7 @@ Output only:
 
 
 def serialize_events(events: tuple[Event, ...] | list[Event]) -> str:
-    lines = ["<conversation>"]
+    lines = ['<conversation>']
     for event in events:
         attrs = [
             f'role="{escape(event.role, quote=True)}"',
@@ -30,16 +30,14 @@ def serialize_events(events: tuple[Event, ...] | list[Event]) -> str:
             attrs.append('partial="true"')
         if event.event_id:
             attrs.append(f'id="{escape(event.event_id, quote=True)}"')
-        lines.append(f"<event {' '.join(attrs)}>{escape(event.text)}</event>")
-    lines.append("</conversation>")
-    return "\n".join(lines)
+        lines.append(f'<event {" ".join(attrs)}>{escape(event.text)}</event>')
+    lines.append('</conversation>')
+    return '\n'.join(lines)
 
 
 def build_prompt(events: tuple[Event, ...] | list[Event]) -> str:
-    return f"{SYSTEM_PROMPT}\n\n{serialize_events(events)}"
+    return f'{SYSTEM_PROMPT}\n\n{serialize_events(events)}'
 
 
-def format_training_text(
-    events: tuple[Event, ...] | list[Event], target: Target
-) -> str:
-    return f"{build_prompt(events)}\n{target_to_text(target)}"
+def format_training_text(events: tuple[Event, ...] | list[Event], target: Target) -> str:
+    return f'{build_prompt(events)}\n{target_to_text(target)}'

@@ -13,7 +13,7 @@ from .train import DEFAULT_MODEL
 
 
 class EventIn(BaseModel):
-    role: Literal["system", "user", "assistant"]
+    role: Literal['system', 'user', 'assistant']
     text: str = Field(min_length=1)
     dt_ms: int = Field(default=0, ge=0)
     event_id: str | None = None
@@ -25,16 +25,16 @@ class DecideRequest(BaseModel):
 
 
 class DecideResponse(BaseModel):
-    action: Literal["wait", "respond", "interject", "continue"]
+    action: Literal['wait', 'respond', 'interject', 'continue']
     messages: list[str]
     raw: str
     mode: str
 
 
 def create_app(engine: InteractionEngine) -> FastAPI:
-    app = FastAPI(title="Tiny Interjection Model Alpha")
+    app = FastAPI(title='Tiny Interjection Model Alpha')
 
-    @app.post("/decide", response_model=DecideResponse)
+    @app.post('/decide', response_model=DecideResponse)
     def decide(request: DecideRequest) -> DecideResponse:
         events = tuple(
             Event(
@@ -58,16 +58,14 @@ def create_app(engine: InteractionEngine) -> FastAPI:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Serve the TIM decision API.")
-    parser.add_argument("--model-name", default=DEFAULT_MODEL)
-    parser.add_argument(
-        "--adapter-dir", type=Path, default=Path("adapters/qwen3-4b-instruct-2507")
-    )
-    parser.add_argument("--base-only", action="store_true")
-    parser.add_argument("--heuristic", action="store_true")
-    parser.add_argument("--no-4bit", action="store_true")
-    parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=8000)
+    parser = argparse.ArgumentParser(description='Serve the TIM decision API.')
+    parser.add_argument('--model-name', default=DEFAULT_MODEL)
+    parser.add_argument('--adapter-dir', type=Path, default=Path('adapters/qwen3-4b-instruct-2507'))
+    parser.add_argument('--base-only', action='store_true')
+    parser.add_argument('--heuristic', action='store_true')
+    parser.add_argument('--no-4bit', action='store_true')
+    parser.add_argument('--host', default='127.0.0.1')
+    parser.add_argument('--port', type=int, default=8000)
     args = parser.parse_args()
 
     engine = InteractionEngine(
@@ -84,5 +82,5 @@ def main() -> None:
     uvicorn.run(app, host=args.host, port=args.port)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
