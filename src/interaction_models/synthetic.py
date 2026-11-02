@@ -201,10 +201,9 @@ def _respond_example(index: int, rng: random.Random) -> Example:
     response = f'Got it - I will {task} and {detail}.'
     if variant not in {2, 4}:
         response = f'Got it - I will {task} and {detail}, with a {tone} tone.'
-    target = Target(action='respond', messages=(response,))
     return Example(
         events=events,
-        target=target,
+        target=Target(action='respond', messages=(response,)),
         source='synthetic',
         case_id=f'synthetic-respond-{index:05d}',
     )
@@ -212,24 +211,18 @@ def _respond_example(index: int, rng: random.Random) -> Example:
 
 def _single_respond_example(index: int, rng: random.Random) -> Example:
     question, answer = QUESTION_ANSWERS[rng.randrange(len(QUESTION_ANSWERS))]
-    target = Target(
-        action='respond',
-        messages=(answer,),
-    )
     return Example(
         events=(Event(role='user', text=question, dt_ms=0),),
-        target=target,
+        target=Target(action='respond', messages=(answer,)),
         source='synthetic',
         case_id=f'synthetic-respond-single-{index:05d}',
     )
 
 
 def _wait_example(index: int, rng: random.Random) -> Example:
-    fragment = _pick(rng, INCOMPLETE_FRAGMENTS)
-    target = Target(action='wait', messages=())
     return Example(
-        events=(Event(role='user', text=fragment, dt_ms=0),),
-        target=target,
+        events=(Event(role='user', text=_pick(rng, INCOMPLETE_FRAGMENTS), dt_ms=0),),
+        target=Target(action='wait', messages=()),
         source='synthetic',
         case_id=f'synthetic-wait-{index:05d}',
     )
@@ -264,10 +257,9 @@ def _interject_example(index: int, rng: random.Random) -> Example:
         response = f'Switching to a {output_format} instead:'
     elif not tone_only:
         response = f'Adjusting it for {audience} with a {tone} tone:'
-    target = Target(action='interject', messages=(response,))
     return Example(
         events=events,
-        target=target,
+        target=Target(action='interject', messages=(response,)),
         source='synthetic',
         case_id=f'synthetic-interject-{index:05d}',
     )
@@ -281,10 +273,9 @@ def _continue_after_backchannel(index: int, rng: random.Random) -> Example:
         Event(role='assistant', text=assistant_start, dt_ms=rng.randrange(500, 1_200)),
         Event(role='user', text=_pick(rng, BACKCHANNELS), dt_ms=rng.randrange(250, 1_200)),
     )
-    target = Target(action='continue', messages=(follow_on,))
     return Example(
         events=events,
-        target=target,
+        target=Target(action='continue', messages=(follow_on,)),
         source='synthetic',
         case_id=f'synthetic-continue-backchannel-{index:05d}',
     )
@@ -297,10 +288,9 @@ def _continue_assistant_example(index: int, rng: random.Random) -> Example:
         Event(role='user', text=task, dt_ms=0),
         Event(role='assistant', text=assistant_start, dt_ms=rng.randrange(500, 1_200)),
     )
-    target = Target(action='continue', messages=(follow_on,))
     return Example(
         events=events,
-        target=target,
+        target=Target(action='continue', messages=(follow_on,)),
         source='synthetic',
         case_id=f'synthetic-continue-assistant-{index:05d}',
     )

@@ -32,26 +32,15 @@ def bench_cases_from_jsonl(path: Path) -> list[BenchCase]:
     cases: list[BenchCase] = []
     for row in read_jsonl(path):
         target_raw = row.get('target') or {}
-        events = tuple(event_from_dict(event) for event in row.get('events', []))
-        target = Target(
-            action=target_raw['action'],
-            messages=tuple(target_raw.get('messages', [])),
-        )
         cases.append(
             BenchCase(
                 case_id=str(row.get('case_id') or len(cases)),
-                events=events,
-                target=target,
+                events=tuple(event_from_dict(event) for event in row.get('events', [])),
+                target=Target(action=target_raw['action'], messages=tuple(target_raw.get('messages', []))),
                 expected_contains=tuple(row.get('expected_contains', [])),
             )
         )
     return cases
-
-
-def load_doubletext_cases(path: Path | None) -> list[BenchCase]:
-    if path and path.exists():
-        return bench_cases_from_jsonl(path)
-    return list(DOUBLE_TEXT_BENCH)
 
 
 def score_cases(engine: InteractionEngine, cases: list[BenchCase]) -> dict[str, Any]:
@@ -168,7 +157,9 @@ def main() -> None:
     parser.add_argument('--no-4bit', action='store_true')
     args = parser.parse_args()
 
-    cases = load_doubletext_cases(args.bench_file)
+    cases = (
+        bench_cases_from_jsonl(args.bench_file) if args.bench_file and args.bench_file.exists() else list(DOUBLE_TEXT_BENCH)
+    )
     report: dict[str, Any] = {'doubletextbench': {}}
 
     if args.base_only or args.compare_base:
