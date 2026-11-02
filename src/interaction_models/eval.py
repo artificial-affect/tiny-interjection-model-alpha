@@ -13,11 +13,11 @@ from .parser import TargetParseError, parse_target
 from .schema import Event, Target, event_from_dict
 from .train import DEFAULT_MODEL
 
-WORD_RE = re.compile(r"[a-z0-9]+")
+WORD_RE = re.compile(r'[a-z0-9]+')
 
 
 def _word_root(word: str) -> str:
-    if len(word) > 3 and word.endswith("s") and not word.endswith("ss"):
+    if len(word) > 3 and word.endswith('s') and not word.endswith('ss'):
         return word[:-1]
     return word
 
@@ -31,18 +31,18 @@ def contains_expected_term(message: str, expected: str) -> bool:
 def bench_cases_from_jsonl(path: Path) -> list[BenchCase]:
     cases: list[BenchCase] = []
     for row in read_jsonl(path):
-        target_raw = row.get("target") or {}
-        events = tuple(event_from_dict(event) for event in row.get("events", []))
+        target_raw = row.get('target') or {}
+        events = tuple(event_from_dict(event) for event in row.get('events', []))
         target = Target(
-            action=target_raw["action"],
-            messages=tuple(target_raw.get("messages", [])),
+            action=target_raw['action'],
+            messages=tuple(target_raw.get('messages', [])),
         )
         cases.append(
             BenchCase(
-                case_id=str(row.get("case_id") or len(cases)),
+                case_id=str(row.get('case_id') or len(cases)),
                 events=events,
                 target=target,
-                expected_contains=tuple(row.get("expected_contains", [])),
+                expected_contains=tuple(row.get('expected_contains', [])),
             )
         )
     return cases
@@ -76,16 +76,14 @@ def score_cases(engine: InteractionEngine, cases: list[BenchCase]) -> dict[str, 
         if predicted == case.target.action:
             action_correct += 1
 
-        if case.target.action == "wait":
+        if case.target.action == 'wait':
             wait_cases += 1
-            if predicted != "wait":
+            if predicted != 'wait':
                 premature_responses += 1
 
-        joined_messages = " ".join(decision.target.messages)
+        joined_messages = ' '.join(decision.target.messages)
         expected_contains = tuple(case.expected_contains)
-        contains_ok = all(
-            contains_expected_term(joined_messages, item) for item in expected_contains
-        )
+        contains_ok = all(contains_expected_term(joined_messages, item) for item in expected_contains)
         if expected_contains:
             contains_total += 1
             if contains_ok:
@@ -93,23 +91,23 @@ def score_cases(engine: InteractionEngine, cases: list[BenchCase]) -> dict[str, 
 
         results.append(
             {
-                "case_id": case.case_id,
-                "expected_action": case.target.action,
-                "predicted_action": predicted,
-                "schema_valid": valid,
-                "contains_ok": contains_ok if expected_contains else None,
-                "raw": decision.raw,
+                'case_id': case.case_id,
+                'expected_action': case.target.action,
+                'predicted_action': predicted,
+                'schema_valid': valid,
+                'contains_ok': contains_ok if expected_contains else None,
+                'raw': decision.raw,
             }
         )
 
     total = max(1, len(cases))
     return {
-        "total": len(cases),
-        "schema_valid_rate": schema_valid / total,
-        "action_accuracy": action_correct / total,
-        "expected_contains_accuracy": contains_correct / max(1, contains_total),
-        "premature_response_rate": premature_responses / max(1, wait_cases),
-        "results": results,
+        'total': len(cases),
+        'schema_valid_rate': schema_valid / total,
+        'action_accuracy': action_correct / total,
+        'expected_contains_accuracy': contains_correct / max(1, contains_total),
+        'premature_response_rate': premature_responses / max(1, wait_cases),
+        'results': results,
     }
 
 
@@ -117,37 +115,28 @@ def semantic_turn_examples(limit: int) -> list[BenchCase]:
     try:
         from datasets import load_dataset
     except ImportError as exc:
-        raise RuntimeError(
-            "Install dependencies before semantic turn-taking evaluation."
-        ) from exc
+        raise RuntimeError('Install dependencies before semantic turn-taking evaluation.') from exc
 
-    dataset = load_dataset(
-        "anyreach-ai/semantic-turn-taking-benchmark", split="test", streaming=True
-    )
+    dataset = load_dataset('anyreach-ai/semantic-turn-taking-benchmark', split='test', streaming=True)
     cases: list[BenchCase] = []
     for row in dataset:
         if len(cases) >= limit:
             break
         if not isinstance(row, dict):
             continue
-        action_raw = row.get("action") or row.get("label") or row.get("target")
-        text_raw = (
-            row.get("text")
-            or row.get("prompt")
-            or row.get("conversation")
-            or row.get("context")
-        )
+        action_raw = row.get('action') or row.get('label') or row.get('target')
+        text_raw = row.get('text') or row.get('prompt') or row.get('conversation') or row.get('context')
         if action_raw is None or text_raw is None:
             continue
         try:
             action = map_semantic_turn_action(str(action_raw))
         except ValueError:
             continue
-        events = (Event(role="user", text=str(text_raw), dt_ms=0),)
-        messages = () if action == "wait" else ("Continuing.",)
+        events = (Event(role='user', text=str(text_raw), dt_ms=0),)
+        messages = () if action == 'wait' else ('Continuing.',)
         cases.append(
             BenchCase(
-                case_id=f"semantic-{len(cases)}",
+                case_id=f'semantic-{len(cases)}',
                 events=events,
                 target=Target(action=action, messages=messages),  # type: ignore[arg-type]
             )
@@ -166,48 +155,38 @@ def build_engine(args: argparse.Namespace, *, base_only: bool) -> InteractionEng
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Evaluate TIM behavior.")
-    parser.add_argument("--model-name", default=DEFAULT_MODEL)
-    parser.add_argument(
-        "--adapter-dir", type=Path, default=Path("adapters/qwen3-4b-instruct-2507")
-    )
-    parser.add_argument(
-        "--bench-file", type=Path, default=Path("data/processed/doubletextbench.jsonl")
-    )
-    parser.add_argument("--report-file", type=Path, default=None)
-    parser.add_argument("--base-only", action="store_true")
-    parser.add_argument("--compare-base", action="store_true")
-    parser.add_argument("--semantic-turn", action="store_true")
-    parser.add_argument("--semantic-limit", type=int, default=200)
-    parser.add_argument("--heuristic", action="store_true")
-    parser.add_argument("--no-4bit", action="store_true")
+    parser = argparse.ArgumentParser(description='Evaluate TIM behavior.')
+    parser.add_argument('--model-name', default=DEFAULT_MODEL)
+    parser.add_argument('--adapter-dir', type=Path, default=Path('adapters/qwen3-4b-instruct-2507'))
+    parser.add_argument('--bench-file', type=Path, default=Path('data/processed/doubletextbench.jsonl'))
+    parser.add_argument('--report-file', type=Path, default=None)
+    parser.add_argument('--base-only', action='store_true')
+    parser.add_argument('--compare-base', action='store_true')
+    parser.add_argument('--semantic-turn', action='store_true')
+    parser.add_argument('--semantic-limit', type=int, default=200)
+    parser.add_argument('--heuristic', action='store_true')
+    parser.add_argument('--no-4bit', action='store_true')
     args = parser.parse_args()
 
     cases = load_doubletext_cases(args.bench_file)
-    report: dict[str, Any] = {"doubletextbench": {}}
+    report: dict[str, Any] = {'doubletextbench': {}}
 
     if args.base_only or args.compare_base:
-        report["doubletextbench"]["base"] = score_cases(
-            build_engine(args, base_only=True), cases
-        )
+        report['doubletextbench']['base'] = score_cases(build_engine(args, base_only=True), cases)
 
     if not args.base_only:
-        report["doubletextbench"]["adapter"] = score_cases(
-            build_engine(args, base_only=False), cases
-        )
+        report['doubletextbench']['adapter'] = score_cases(build_engine(args, base_only=False), cases)
 
     if args.semantic_turn:
         semantic_cases = semantic_turn_examples(args.semantic_limit)
-        report["semantic_turn"] = score_cases(
-            build_engine(args, base_only=False), semantic_cases
-        )
+        report['semantic_turn'] = score_cases(build_engine(args, base_only=False), semantic_cases)
 
     rendered = json.dumps(report, indent=2, sort_keys=True)
     if args.report_file:
         args.report_file.parent.mkdir(parents=True, exist_ok=True)
-        args.report_file.write_text(rendered + "\n", encoding="utf-8")
+        args.report_file.write_text(rendered + '\n', encoding='utf-8')
     print(rendered)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
