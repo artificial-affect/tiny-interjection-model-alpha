@@ -69,30 +69,25 @@ def call_llama_cli(
     return result.stdout[start : end + len('<done/>')]
 
 
-def call_ollama(*, url: str, model: str, prompt: str, max_new_tokens: int):
-    body = json.dumps(
-        {
-            'model': model,
-            'prompt': prompt,
-            'raw': True,
-            'stream': False,
-            'think': False,
-            'keep_alive': '10m',
-            'options': {
-                'temperature': 0,
-                'seed': 1,
-                'num_ctx': 4096,
-                'num_predict': max_new_tokens,
-            },
-        }
-    ).encode()
+def _post_ollama(url: str, endpoint: str, payload: dict[str, Any], *, num_predict: int):
+    payload = {
+        **payload,
+        'stream': False,
+        'think': False,
+        'keep_alive': '10m',
+        'options': {'temperature': 0, 'seed': 1, 'num_ctx': 4096, 'num_predict': num_predict},
+    }
     request = urllib.request.Request(
-        f'{url}/api/generate',
-        data=body,
+        f'{url}/api/{endpoint}',
+        data=json.dumps(payload).encode(),
         headers={'content-type': 'application/json'},
     )
     with urllib.request.urlopen(request, timeout=120) as response:
-        payload = json.load(response)
+        return json.load(response)
+
+
+def call_ollama(*, url: str, model: str, prompt: str, max_new_tokens: int):
+    payload = _post_ollama(url, 'generate', {'model': model, 'prompt': prompt, 'raw': True}, num_predict=max_new_tokens)
     raw = payload.get('response')
     if not isinstance(raw, str):
         raise RuntimeError('Ollama returned no TIM response.')
@@ -114,28 +109,7 @@ def call_ollama_chat(*, url: str, model: str, events: tuple[Event, ...]):
             messages[-1]['content'] += f'\n{event.text}'
         else:
             messages.append({'role': event.role, 'content': event.text})
-    body = json.dumps(
-        {
-            'model': model,
-            'messages': messages,
-            'stream': False,
-            'think': False,
-            'keep_alive': '10m',
-            'options': {
-                'temperature': 0,
-                'seed': 1,
-                'num_ctx': 4096,
-                'num_predict': 256,
-            },
-        }
-    ).encode()
-    request = urllib.request.Request(
-        f'{url}/api/chat',
-        data=body,
-        headers={'content-type': 'application/json'},
-    )
-    with urllib.request.urlopen(request, timeout=120) as response:
-        payload = json.load(response)
+    payload = _post_ollama(url, 'chat', {'model': model, 'messages': messages}, num_predict=256)
     message = payload.get('message')
     content = message.get('content') if isinstance(message, dict) else None
     if not isinstance(content, str) or not content.strip():

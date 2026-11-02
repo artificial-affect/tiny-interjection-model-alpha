@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import random
+from dataclasses import replace
 
 from .schema import Action, Event, Example, Target
 
@@ -24,29 +25,16 @@ TASKS = (
 )
 
 QUESTION_ANSWERS = (
-    (
-        'what should a first benchmark check?',
-        BENCHMARK_ANSWER,
-    ),
-    (
-        'which behaviors belong in the initial benchmark?',
-        BENCHMARK_ANSWER,
-    ),
-    (
-        'what capabilities should the earliest benchmark cover?',
-        BENCHMARK_ANSWER,
-    ),
-    (
-        'what should an initial benchmark measure?',
-        BENCHMARK_ANSWER,
-    ),
-    (
-        'what must the first evaluation benchmark capture?',
-        BENCHMARK_ANSWER,
-    ),
-    (
-        'which interaction skills should a first benchmark measure?',
-        BENCHMARK_ANSWER,
+    *(
+        (question, BENCHMARK_ANSWER)
+        for question in (
+            'what should a first benchmark check?',
+            'which behaviors belong in the initial benchmark?',
+            'what capabilities should the earliest benchmark cover?',
+            'what should an initial benchmark measure?',
+            'what must the first evaluation benchmark capture?',
+            'which interaction skills should a first benchmark measure?',
+        )
     ),
     (
         'how should I write the launch note?',
@@ -265,34 +253,20 @@ def _interject_example(index: int, rng: random.Random) -> Example:
     )
 
 
-def _continue_after_backchannel(index: int, rng: random.Random) -> Example:
-    task = _pick(rng, TASKS)
-    assistant_start, follow_on = CONTINUATION_PAIRS[rng.randrange(len(CONTINUATION_PAIRS))]
-    events = (
-        Event(role='user', text=task, dt_ms=0),
-        Event(role='assistant', text=assistant_start, dt_ms=rng.randrange(500, 1_200)),
-        Event(role='user', text=_pick(rng, BACKCHANNELS), dt_ms=rng.randrange(250, 1_200)),
-    )
-    return Example(
-        events=events,
-        target=Target(action='continue', messages=(follow_on,)),
-        source='synthetic',
-        case_id=f'synthetic-continue-backchannel-{index:05d}',
-    )
-
-
-def _continue_assistant_example(index: int, rng: random.Random) -> Example:
+def _continue_example(index: int, rng: random.Random, *, backchannel: bool) -> Example:
     task = _pick(rng, TASKS)
     assistant_start, follow_on = CONTINUATION_PAIRS[rng.randrange(len(CONTINUATION_PAIRS))]
     events = (
         Event(role='user', text=task, dt_ms=0),
         Event(role='assistant', text=assistant_start, dt_ms=rng.randrange(500, 1_200)),
     )
+    if backchannel:
+        events += (Event(role='user', text=_pick(rng, BACKCHANNELS), dt_ms=rng.randrange(250, 1_200)),)
     return Example(
         events=events,
         target=Target(action='continue', messages=(follow_on,)),
         source='synthetic',
-        case_id=f'synthetic-continue-assistant-{index:05d}',
+        case_id=f'synthetic-continue-{"backchannel" if backchannel else "assistant"}-{index:05d}',
     )
 
 
@@ -314,10 +288,7 @@ def synthetic_examples(count: int, seed: int) -> list[Example]:
         elif action == 'interject':
             examples.append(_interject_example(index, rng))
         else:
-            if (index // len(ACTION_CYCLE)) % 2:
-                examples.append(_continue_after_backchannel(index, rng))
-            else:
-                examples.append(_continue_assistant_example(index, rng))
+            examples.append(_continue_example(index, rng, backchannel=bool((index // len(ACTION_CYCLE)) % 2)))
 
     rng.shuffle(examples)
     return examples
@@ -330,11 +301,9 @@ def synthetic_question_examples(count: int, seed: int) -> list[Example]:
     rng = random.Random(seed)
     examples: list[Example] = []
     for index in range(count):
-        example = _single_respond_example(index, rng)
         examples.append(
-            Example(
-                events=example.events,
-                target=example.target,
+            replace(
+                _single_respond_example(index, rng),
                 source='synthetic-question-boost',
                 case_id=f'synthetic-question-boost-{index:05d}',
             )
