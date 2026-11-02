@@ -10,21 +10,18 @@ from typing import Any
 
 from candidate_utils import (
     ACTIONS,
+    PLACEHOLDER_RE,
+    WORD_RE,
     extract_json_object,
     fingerprint,
     normalize_example,
     validation_errors,
 )
 
-PLACEHOLDER_RE = re.compile(
-    r'\b(?:lorem ipsum|placeholder|example text|sample text|foo(?:\s+bar(?:\s+baz)?)?|xxx|todo)\b',
-    re.IGNORECASE,
-)
 META_RE = re.compile(
     r'\b(?:as an ai|json object|target action|training example)\b',
     re.IGNORECASE,
 )
-WORD_RE = re.compile(r"[A-Za-z0-9']+")
 
 
 def words(text: str) -> list[str]:

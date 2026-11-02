@@ -10,6 +10,7 @@ import time
 from collections import Counter
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from typing import Any
 
 from candidate_utils import (
     ACTIONS,
@@ -314,30 +315,11 @@ def call_do_serverless(
     return extract_chat_content(json.loads(completed.stdout))
 
 
-def call_do_serverless_with_retries(
-    *,
-    doctl_bin: str,
-    model: str,
-    prompt: str,
-    temperature: float,
-    timeout: float,
-    num_predict: int,
-    retries: int,
-    retry_sleep: float,
-    seed: int | None = None,
-) -> str:
+def call_do_serverless_with_retries(*, retries: int, retry_sleep: float, **request: Any) -> str:
     last_error: Exception | None = None
     for retry_index in range(retries + 1):
         try:
-            return call_do_serverless(
-                doctl_bin=doctl_bin,
-                model=model,
-                prompt=prompt,
-                temperature=temperature,
-                timeout=timeout,
-                num_predict=num_predict,
-                seed=seed,
-            )
+            return call_do_serverless(**request)
         except (subprocess.SubprocessError, json.JSONDecodeError) as exc:
             last_error = exc
             if retry_index >= retries:
