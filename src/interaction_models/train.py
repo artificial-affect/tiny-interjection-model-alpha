@@ -53,16 +53,6 @@ def load_prompt_completion_rows(train_file: Path, max_samples: int | None):
     return rows
 
 
-def load_text_dataset(train_file: Path, max_samples: int | None):
-    try:
-        from datasets import Dataset
-    except ImportError as exc:
-        raise RuntimeError('Install dependencies with `make setup` before training.') from exc
-
-    rows = load_prompt_completion_rows(train_file, max_samples)
-    return Dataset.from_list(rows)
-
-
 def load_tokenizer(model_name: str):
     from transformers import AutoTokenizer
 
@@ -108,7 +98,12 @@ def train(args: argparse.Namespace) -> None:
     from peft import LoraConfig, PeftModel, prepare_model_for_kbit_training
     from trl import SFTConfig, SFTTrainer
 
-    dataset = load_text_dataset(args.train_file, args.max_samples)
+    try:
+        from datasets import Dataset
+    except ImportError as exc:
+        raise RuntimeError('Install dependencies with `make setup` before training.') from exc
+
+    dataset = Dataset.from_list(load_prompt_completion_rows(args.train_file, args.max_samples))
     tokenizer = load_tokenizer(args.model_name)
     model = load_model(args.model_name, use_4bit=not args.no_4bit)
 

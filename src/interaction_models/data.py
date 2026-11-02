@@ -211,18 +211,6 @@ def events_from_record(record: dict[str, Any]) -> tuple[Event, ...]:
     return tuple(events)
 
 
-def seed_examples() -> list[Example]:
-    return [
-        Example(
-            events=case.events,
-            target=case.target,
-            source='doubletextbench',
-            case_id=case.case_id,
-        )
-        for case in DOUBLE_TEXT_BENCH
-    ]
-
-
 def public_examples(limit_per_dataset: int) -> list[Example]:
     try:
         from datasets import load_dataset
@@ -266,21 +254,17 @@ def rows_from_examples(examples: Iterable[Example]) -> list[dict[str, Any]]:
 
 
 def rows_from_bench_cases() -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    for case in DOUBLE_TEXT_BENCH:
-        example = Example(
+    rows = rows_from_examples(
+        Example(
             events=case.events,
             target=case.target,
             source='doubletextbench',
             case_id=case.case_id,
         )
-        prompt = f'{build_prompt(example.events)}\n'
-        completion = target_to_text(example.target)
-        row = example_to_dict(example, text=f'{prompt}{completion}')
-        row['prompt'] = prompt
-        row['completion'] = completion
+        for case in DOUBLE_TEXT_BENCH
+    )
+    for row, case in zip(rows, DOUBLE_TEXT_BENCH):
         row['expected_contains'] = list(case.expected_contains)
-        rows.append(row)
     return rows
 
 

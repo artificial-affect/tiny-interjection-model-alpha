@@ -214,18 +214,14 @@ class InteractionEngine:
         self.max_new_tokens = max_new_tokens
         self.model: Any | None = None
         self.tokenizer: Any | None = None
-        if not self.heuristic and self.llama_model_path is None and not ollama_model:
-            self._load_model()
-
-    def _load_model(self) -> None:
+        if self.heuristic or self.llama_model_path is not None or ollama_model:
+            return
         tokenizer = load_tokenizer(self.model_name)
         model = load_model(self.model_name, use_4bit=self.use_4bit, purpose='inference')
-
         if self.adapter_dir and not self.base_only:
             from peft import PeftModel
 
             model = PeftModel.from_pretrained(model, self.adapter_dir)
-
         model.eval()
         self.model = model
         self.tokenizer = tokenizer

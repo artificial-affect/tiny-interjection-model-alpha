@@ -36,17 +36,7 @@ def create_app(engine: InteractionEngine) -> FastAPI:
 
     @app.post('/decide', response_model=DecideResponse)
     def decide(request: DecideRequest) -> DecideResponse:
-        events = tuple(
-            Event(
-                role=event.role,
-                text=event.text,
-                dt_ms=event.dt_ms,
-                event_id=event.event_id,
-                partial=event.partial,
-            )
-            for event in request.events
-        )
-        decision = engine.decide(events)
+        decision = engine.decide(tuple(Event(**event.model_dump()) for event in request.events))
         return DecideResponse(
             action=decision.target.action,
             messages=list(decision.target.messages),

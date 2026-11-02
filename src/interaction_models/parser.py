@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from .schema import ACTIONS, Action, Target
+from .schema import ACTIONS, Target
 
 ACT_RE = re.compile(r'<act>\s*(.*?)\s*</act>', re.IGNORECASE | re.DOTALL)
 MSG_RE = re.compile(r'<msg>\s*(.*?)\s*</msg>', re.IGNORECASE | re.DOTALL)

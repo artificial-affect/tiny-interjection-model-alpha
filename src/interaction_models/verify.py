@@ -56,37 +56,21 @@ def verify_report(
     if total < min_total:
         failures.append(f'total {total} < {min_total}')
 
-    checks = (
-        (
-            'schema_valid_rate',
-            _metric(section, 'schema_valid_rate'),
-            '>=',
-            min_schema_valid_rate,
-        ),
-        (
-            'action_accuracy',
-            _metric(section, 'action_accuracy'),
-            '>=',
-            min_action_accuracy,
-        ),
-        (
-            'expected_contains_accuracy',
-            _metric(section, 'expected_contains_accuracy'),
-            '>=',
-            min_expected_contains_accuracy,
-        ),
-        (
-            'premature_response_rate',
-            _metric(section, 'premature_response_rate'),
-            '<=',
-            max_premature_response_rate,
-        ),
-    )
-    for name, observed, operator, threshold in checks:
-        if operator == '>=' and observed < threshold:
-            failures.append(f'{name} {observed:.4f} < {threshold:.4f}')
-        if operator == '<=' and observed > threshold:
-            failures.append(f'{name} {observed:.4f} > {threshold:.4f}')
+    metrics = {
+        name: _metric(section, name)
+        for name in ('schema_valid_rate', 'action_accuracy', 'expected_contains_accuracy', 'premature_response_rate')
+    }
+    for name, threshold in (
+        ('schema_valid_rate', min_schema_valid_rate),
+        ('action_accuracy', min_action_accuracy),
+        ('expected_contains_accuracy', min_expected_contains_accuracy),
+    ):
+        if metrics[name] < threshold:
+            failures.append(f'{name} {metrics[name]:.4f} < {threshold:.4f}')
+    if metrics['premature_response_rate'] > max_premature_response_rate:
+        failures.append(
+            f'premature_response_rate {metrics["premature_response_rate"]:.4f} > {max_premature_response_rate:.4f}'
+        )
 
     case_failures = _failed_cases(section)
     if case_failures:
@@ -95,15 +79,7 @@ def verify_report(
     if failures:
         raise VerificationError('\n'.join(failures))
 
-    return {
-        'suite': suite,
-        'model_key': model_key,
-        'total': total,
-        'schema_valid_rate': _metric(section, 'schema_valid_rate'),
-        'action_accuracy': _metric(section, 'action_accuracy'),
-        'expected_contains_accuracy': _metric(section, 'expected_contains_accuracy'),
-        'premature_response_rate': _metric(section, 'premature_response_rate'),
-    }
+    return {'suite': suite, 'model_key': model_key, 'total': total, **metrics}
 
 
 def main() -> None:

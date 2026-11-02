@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Iterable, Literal
+from typing import Any, Literal
 
 Action = Literal['wait', 'respond', 'interject', 'continue']
 Role = Literal['system', 'user', 'assistant']
 
 ACTIONS: tuple[str, ...] = ('wait', 'respond', 'interject', 'continue')
-ROLES: tuple[str, ...] = ('system', 'user', 'assistant')
 
 
 @dataclass(frozen=True)
@@ -98,10 +97,3 @@ def example_to_dict(example: Example, text: str | None = None) -> dict[str, Any]
     if text is not None:
         data['text'] = text
     return data
-
-
-def ensure_events(events: Iterable[Event]) -> tuple[Event, ...]:
-    normalized = tuple(events)
-    if not normalized:
-        raise ValueError('At least one event is required.')
-    return normalized

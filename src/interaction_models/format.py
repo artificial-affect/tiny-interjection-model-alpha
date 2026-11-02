@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from html import escape
 
-from .parser import target_to_text
-from .schema import Event, Target
+from .schema import Event
 
 SYSTEM_PROMPT = """You are a text interaction model for typed chat.
 Read the event stream, then emit exactly one floor-control action and any assistant messages.
@@ -37,7 +36,3 @@ def serialize_events(events: tuple[Event, ...] | list[Event]) -> str:
 
 def build_prompt(events: tuple[Event, ...] | list[Event]) -> str:
     return f'{SYSTEM_PROMPT}\n\n{serialize_events(events)}'
-
-
-def format_training_text(events: tuple[Event, ...] | list[Event], target: Target) -> str:
-    return f'{build_prompt(events)}\n{target_to_text(target)}'

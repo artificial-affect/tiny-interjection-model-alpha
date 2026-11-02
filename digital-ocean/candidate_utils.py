@@ -4,7 +4,6 @@ import hashlib
 import html
 import json
 import re
-from collections.abc import Iterable
 from typing import Any
 
 ACTIONS = ('wait', 'respond', 'interject', 'continue')
@@ -266,10 +265,6 @@ def format_prompt(events: list[dict[str, Any]]) -> str:
     return '\n'.join(lines)
 
 
-def format_training_text(events: list[dict[str, Any]], target: dict[str, Any]) -> str:
-    return f'{format_prompt(events)}{target_to_text(target)}'
-
-
 def add_training_text(example: dict[str, Any]) -> dict[str, Any]:
     row = dict(example)
     prompt = format_prompt(example['events'])
@@ -278,15 +273,3 @@ def add_training_text(example: dict[str, Any]) -> dict[str, Any]:
     row['completion'] = completion
     row['text'] = f'{prompt}{completion}'
     return row
-
-
-def iter_jsonl(path: str) -> Iterable[tuple[int, dict[str, Any]]]:
-    with open(path, encoding='utf-8') as handle:
-        for line_number, line in enumerate(handle, start=1):
-            stripped = line.strip()
-            if not stripped:
-                continue
-            parsed = json.loads(stripped)
-            if not isinstance(parsed, dict):
-                raise ValueError(f'Line {line_number} is not a JSON object.')
-            yield line_number, parsed
