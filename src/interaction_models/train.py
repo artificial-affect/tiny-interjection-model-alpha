@@ -187,8 +187,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
-    args = build_parser().parse_args()
-    train(args)
+    train(build_parser().parse_args())
 
 
 if __name__ == '__main__':

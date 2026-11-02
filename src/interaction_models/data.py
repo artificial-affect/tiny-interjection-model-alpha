@@ -163,23 +163,15 @@ def examples_from_events(
     return examples
 
 
-def extract_messages_container(record: dict[str, Any]) -> Any:
-    for key in (
-        'events',
-        'messages',
-        'conversation',
-        'conversations',
-        'chat',
-        'dialogue',
-        'turns',
-    ):
-        if key in record:
-            return record[key]
-    return None
-
-
 def events_from_record(record: dict[str, Any]) -> tuple[Event, ...]:
-    container = extract_messages_container(record)
+    container = next(
+        (
+            record[key]
+            for key in ('events', 'messages', 'conversation', 'conversations', 'chat', 'dialogue', 'turns')
+            if key in record
+        ),
+        None,
+    )
     if not isinstance(container, list):
         return ()
 

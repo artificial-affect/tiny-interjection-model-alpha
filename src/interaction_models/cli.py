@@ -11,14 +11,6 @@ from .schema import Event
 from .train import DEFAULT_MODEL
 
 
-def print_decision(engine: InteractionEngine, events: tuple[Event, ...]) -> None:
-    decision = engine.decide(events)
-    print(f'\n[{decision.mode}] action={decision.target.action}')
-    for message in decision.target.messages:
-        print(f'assistant> {message}')
-    print('')
-
-
 def ensure_ollama(url: str, executable: Path | None):
     for attempt in range(61):
         try:
@@ -99,7 +91,11 @@ def main() -> None:
 
         if raw.strip() == '':
             if events and not args.demo:
-                print_decision(engine, tuple(events))
+                decision = engine.decide(tuple(events))
+                print(f'\n[{decision.mode}] action={decision.target.action}')
+                for message in decision.target.messages:
+                    print(f'assistant> {message}')
+                print('')
             continue
         if raw.strip() == '/quit':
             break
