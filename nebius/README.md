@@ -96,7 +96,7 @@ Model quality and job execution are reported separately. A completed pipeline lo
 
 ## Runtime and cost
 
-The measured proof run took 37m 24s for the default 200 steps, including downloads, two evaluation suites, training, merge, and quantization. At pricing checked on July 10, 2026, the compute-only estimate is approximately `$0.97`, plus ephemeral disk. The settled billing export was not yet available immediately after completion and remains explicitly tracked in `TODO.md`.
+The measured proof run took 37m 24s for the default 200 steps, including downloads, two evaluation suites, training, merge, and quantization. At pricing checked on July 10, 2026, the compute-only estimate is approximately `$0.97`, plus ephemeral disk. The settled billing export was not yet available immediately after completion.
 
 ## Cleanup
 

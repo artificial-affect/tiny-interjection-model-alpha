@@ -187,7 +187,7 @@ The submission uses the `gpu-l40s-a` platform with the `1gpu-8vcpu-32gb` preset,
 
 Authenticated runs can archive a PEFT adapter, base evaluation, adapter evaluation, generated-validation evaluation, and quantized GGUF in a target Hugging Face model repository. The completed proof run was credentialless, so its model outputs were ephemeral; its status and logs remain available through the Nebius CLI.
 
-The measured 200-step Serverless run took 37m 24s, including model downloads, both evaluation suites, training, merge, and quantization. At the planning rate checked on July 10, 2026, that is a compute-only estimate of about `$0.97`, plus ephemeral disk. The settled billed figure may appear later in the Nebius billing export and is tracked separately in [TODO.md](TODO.md).
+The measured 200-step Serverless run took 37m 24s, including model downloads, both evaluation suites, training, merge, and quantization. At the planning rate checked on July 10, 2026, that is a compute-only estimate of about `$0.97`, plus ephemeral disk. The settled billed figure may appear later in the Nebius billing export.
 
 See [nebius/README.md](nebius/README.md) for setup, monitoring, and security details.
 
