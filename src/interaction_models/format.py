@@ -21,10 +21,7 @@ Output only:
 def serialize_events(events: tuple[Event, ...] | list[Event]) -> str:
     lines = ['<conversation>']
     for event in events:
-        attrs = [
-            f'role="{escape(event.role, quote=True)}"',
-            f'dt_ms="{event.dt_ms}"',
-        ]
+        attrs = [f'role="{escape(event.role, quote=True)}"', f'dt_ms="{event.dt_ms}"']
         if event.partial:
             attrs.append('partial="true"')
         if event.event_id:

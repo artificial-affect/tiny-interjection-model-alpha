@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import argparse
-import json
 import re
 import sys
-from collections import Counter
-from pathlib import Path
+import json
+import argparse
 from typing import Any
+from pathlib import Path
+from collections import Counter
 
 from candidate_utils import (
     ACTIONS,
@@ -18,10 +18,7 @@ from candidate_utils import (
     validation_errors,
 )
 
-META_RE = re.compile(
-    r'\b(?:as an ai|json object|target action|training example)\b',
-    re.IGNORECASE,
-)
+META_RE = re.compile(r'\b(?:as an ai|json object|target action|training example)\b', re.IGNORECASE)
 
 
 def words(text: str) -> list[str]:

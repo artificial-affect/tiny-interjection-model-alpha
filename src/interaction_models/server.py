@@ -7,9 +7,9 @@ from typing import Literal
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-from .inference import InteractionEngine
 from .schema import Event
 from .train import DEFAULT_MODEL
+from .inference import InteractionEngine
 
 
 class EventIn(BaseModel):
@@ -38,10 +38,7 @@ def create_app(engine: InteractionEngine) -> FastAPI:
     def decide(request: DecideRequest) -> DecideResponse:
         decision = engine.decide(tuple(Event(**event.model_dump()) for event in request.events))
         return DecideResponse(
-            action=decision.target.action,
-            messages=list(decision.target.messages),
-            raw=decision.raw,
-            mode=decision.mode,
+            action=decision.target.action, messages=list(decision.target.messages), raw=decision.raw, mode=decision.mode
         )
 
     return app

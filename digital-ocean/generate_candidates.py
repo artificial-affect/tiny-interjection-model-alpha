@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-import argparse
-import json
-import random
 import re
-import subprocess
 import sys
+import json
 import time
-from collections import Counter
-from pathlib import Path
-from tempfile import NamedTemporaryFile
+import random
+import argparse
+import subprocess
 from typing import Any
+from pathlib import Path
+from collections import Counter
+from tempfile import NamedTemporaryFile
 
 from candidate_utils import (
     ACTIONS,
@@ -70,12 +70,7 @@ SITUATIONS = (
     'a QA lead redirecting a test plan toward a regression risk',
 )
 
-TIMING_RANGES = (
-    ('instant', 1, 250),
-    ('quick', 251, 1_000),
-    ('natural', 1_001, 3_000),
-    ('delayed', 3_001, 10_000),
-)
+TIMING_RANGES = (('instant', 1, 250), ('quick', 251, 1_000), ('natural', 1_001, 3_000), ('delayed', 3_001, 10_000))
 
 
 def build_prompt(
@@ -268,22 +263,12 @@ def extract_chat_content(payload: object) -> str:
 
 
 def call_do_serverless(
-    *,
-    doctl_bin: str,
-    model: str,
-    prompt: str,
-    temperature: float,
-    timeout: float,
-    num_predict: int,
-    seed: int | None = None,
+    *, doctl_bin: str, model: str, prompt: str, temperature: float, timeout: float, num_predict: int, seed: int | None = None
 ) -> str:
     request_body = {
         'model': model,
         'messages': [
-            {
-                'role': 'system',
-                'content': 'Return only the requested JSON object. No markdown.',
-            },
+            {'role': 'system', 'content': 'Return only the requested JSON object. No markdown.'},
             {'role': 'user', 'content': prompt},
         ],
         'temperature': temperature,
@@ -343,9 +328,7 @@ def load_existing(path: Path) -> tuple[int, set[str], Counter[str]]:
             try:
                 raw = extract_json_object(stripped)
                 example = normalize_example(
-                    raw,
-                    source=str(raw.get('source') or 'existing'),
-                    case_id=str(raw.get('case_id') or 'existing'),
+                    raw, source=str(raw.get('source') or 'existing'), case_id=str(raw.get('case_id') or 'existing')
                 )
                 if validation_errors(example):
                     continue
@@ -423,10 +406,7 @@ def main() -> int:
     consecutive_request_failures = 0
     started = time.time()
 
-    with (
-        output_path.open(mode, encoding='utf-8') as out,
-        rejects_path.open(mode, encoding='utf-8') as rej,
-    ):
+    with output_path.open(mode, encoding='utf-8') as out, rejects_path.open(mode, encoding='utf-8') as rej:
         for attempt in range(max_attempts):
             if accepted >= args.count:
                 break
@@ -436,13 +416,7 @@ def main() -> int:
             domain = DOMAINS[attempt_rng.randrange(len(DOMAINS))]
             situation = SITUATIONS[attempt_rng.randrange(len(SITUATIONS))]
             timing_range = TIMING_RANGES[(accepted // len(ACTIONS)) % len(TIMING_RANGES)] if args.balanced_timing else None
-            prompt = build_prompt(
-                action,
-                domain,
-                timing_range,
-                situation,
-                failure_focused=args.failure_focused,
-            )
+            prompt = build_prompt(action, domain, timing_range, situation, failure_focused=args.failure_focused)
             case_id = f'do-llm-{action}-{args.seed}-{attempt_index:06d}'
             model_slug = args.model.replace('/', '-').replace(':', '-')
             source = f'do-serverless-{model_slug}'
@@ -479,13 +453,7 @@ def main() -> int:
                 if key in seen:
                     errors.append('duplicate')
                 if errors:
-                    rej.write(
-                        json.dumps(
-                            {'case_id': case_id, 'errors': errors, 'raw': raw},
-                            ensure_ascii=False,
-                        )
-                        + '\n'
-                    )
+                    rej.write(json.dumps({'case_id': case_id, 'errors': errors, 'raw': raw}, ensure_ascii=False) + '\n')
                     continue
 
                 seen.add(key)
@@ -496,10 +464,7 @@ def main() -> int:
                 accepted += 1
                 if args.progress_every and accepted % args.progress_every == 0:
                     elapsed = max(time.time() - started, 1)
-                    print(
-                        f'accepted={accepted} attempts={attempt + 1} rate={accepted / elapsed:.2f}/s',
-                        file=sys.stderr,
-                    )
+                    print(f'accepted={accepted} attempts={attempt + 1} rate={accepted / elapsed:.2f}/s', file=sys.stderr)
             except RuntimeError as exc:
                 consecutive_request_failures += 1
                 rej.write(json.dumps({'case_id': case_id, 'errors': [str(exc)]}, ensure_ascii=False) + '\n')

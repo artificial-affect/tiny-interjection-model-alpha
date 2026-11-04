@@ -1,25 +1,21 @@
 from __future__ import annotations
 
-import argparse
-import itertools
 import json
 import random
-from collections import Counter
+import argparse
+import itertools
 from pathlib import Path
+from collections import Counter
 from typing import Any, Iterable
 
-from .benchmarks import DOUBLE_TEXT_BENCH
 from .format import build_prompt
 from .io import read_jsonl, write_jsonl
+from .benchmarks import DOUBLE_TEXT_BENCH
 from .parser import TargetParseError, parse_target, target_to_text
-from .schema import Event, Example, Target, event_from_dict, example_to_dict
 from .synthetic import synthetic_examples, synthetic_question_examples
+from .schema import Event, Example, Target, event_from_dict, example_to_dict
 
-DEFAULT_PUBLIC_DATASETS = (
-    ('marcodsn/SOC-2602', 'train'),
-    ('marcodsn/SOC-2508', 'train'),
-    ('lmsys/lmsys-chat-1m', 'train'),
-)
+DEFAULT_PUBLIC_DATASETS = (('marcodsn/SOC-2602', 'train'), ('marcodsn/SOC-2508', 'train'), ('lmsys/lmsys-chat-1m', 'train'))
 
 INCOMPLETE_ENDINGS = (
     'and',
@@ -39,17 +35,7 @@ INCOMPLETE_ENDINGS = (
     'about',
 )
 
-CORRECTION_MARKERS = (
-    'actually',
-    'wait',
-    'no ',
-    'not ',
-    'instead',
-    'never mind',
-    'nevermind',
-    'scratch that',
-    'i mean',
-)
+CORRECTION_MARKERS = ('actually', 'wait', 'no ', 'not ', 'instead', 'never mind', 'nevermind', 'scratch that', 'i mean')
 
 BACKCHANNELS = {'yeah', 'yep', 'ok', 'okay', 'mm', 'mhm', 'uh huh', 'uh-huh', 'right'}
 
@@ -89,12 +75,7 @@ def collect_messages(events: tuple[Event, ...], start: int, role: str = 'assista
 
 
 def examples_from_events(
-    events: Iterable[Event],
-    *,
-    source: str,
-    case_prefix: str,
-    burst_ms: int = 3_000,
-    interruption_ms: int = 2_500,
+    events: Iterable[Event], *, source: str, case_prefix: str, burst_ms: int = 3_000, interruption_ms: int = 2_500
 ) -> list[Example]:
     normalized = tuple(event for event in events if event.text)
     examples: list[Example] = []
@@ -223,11 +204,7 @@ def public_examples(limit_per_dataset: int) -> list[Example]:
             if len(events) < 2:
                 continue
             examples.extend(
-                examples_from_events(
-                    events,
-                    source=dataset_name,
-                    case_prefix=f'{dataset_name.replace("/", "-")}-{row_index}',
-                )
+                examples_from_events(events, source=dataset_name, case_prefix=f'{dataset_name.replace("/", "-")}-{row_index}')
             )
 
     return examples
@@ -247,12 +224,7 @@ def rows_from_examples(examples: Iterable[Example]) -> list[dict[str, Any]]:
 
 def rows_from_bench_cases() -> list[dict[str, Any]]:
     rows = rows_from_examples(
-        Example(
-            events=case.events,
-            target=case.target,
-            source='doubletextbench',
-            case_id=case.case_id,
-        )
+        Example(events=case.events, target=case.target, source='doubletextbench', case_id=case.case_id)
         for case in DOUBLE_TEXT_BENCH
     )
     for row, case in zip(rows, DOUBLE_TEXT_BENCH):
@@ -333,10 +305,7 @@ def build_dataset(
     train_rows.extend(additional_rows)
     train_count = write_jsonl(output_dir / 'train.jsonl', train_rows)
     val_count = write_jsonl(output_dir / 'val.jsonl', rows_from_examples(val_examples))
-    bench_count = write_jsonl(
-        output_dir / 'doubletextbench.jsonl',
-        rows_from_bench_cases(),
-    )
+    bench_count = write_jsonl(output_dir / 'doubletextbench.jsonl', rows_from_bench_cases())
     manifest = {
         'seed': seed,
         'val_ratio': val_ratio,

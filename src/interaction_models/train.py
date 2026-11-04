@@ -2,24 +2,16 @@ from __future__ import annotations
 
 import argparse
 import platform
-from pathlib import Path
 from typing import Any
+from pathlib import Path
 
-from .format import build_prompt
 from .io import read_jsonl
+from .format import build_prompt
 from .parser import target_to_text
 from .schema import Target, event_from_dict
 
 DEFAULT_MODEL = 'Qwen/Qwen3-4B-Instruct-2507'
-TEXT_TARGET_MODULES = (
-    'q_proj',
-    'k_proj',
-    'v_proj',
-    'o_proj',
-    'gate_proj',
-    'up_proj',
-    'down_proj',
-)
+TEXT_TARGET_MODULES = ('q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'up_proj', 'down_proj')
 
 
 def load_prompt_completion_rows(train_file: Path, max_samples: int | None):
@@ -36,16 +28,8 @@ def load_prompt_completion_rows(train_file: Path, max_samples: int | None):
         if not isinstance(events_raw, list) or not isinstance(target_raw, dict):
             continue
         events = tuple(event_from_dict(event) for event in events_raw)
-        target = Target(
-            action=target_raw['action'],
-            messages=tuple(target_raw.get('messages', [])),
-        )
-        rows.append(
-            {
-                'prompt': f'{build_prompt(events)}\n',
-                'completion': target_to_text(target),
-            }
-        )
+        target = Target(action=target_raw['action'], messages=tuple(target_raw.get('messages', [])))
+        rows.append({'prompt': f'{build_prompt(events)}\n', 'completion': target_to_text(target)})
     if max_samples is not None:
         rows = rows[:max_samples]
     if not rows:
@@ -95,8 +79,8 @@ def load_model(model_name: str, use_4bit: bool, *, purpose: str = 'training'):
 
 def train(args: argparse.Namespace) -> None:
     import torch
-    from peft import LoraConfig, PeftModel, prepare_model_for_kbit_training
     from trl import SFTConfig, SFTTrainer
+    from peft import LoraConfig, PeftModel, prepare_model_for_kbit_training
 
     try:
         from datasets import Dataset
@@ -141,11 +125,7 @@ def train(args: argparse.Namespace) -> None:
         completion_only_loss=True,
     )
 
-    trainer_kwargs = {
-        'model': model,
-        'args': train_config,
-        'train_dataset': dataset,
-    }
+    trainer_kwargs = {'model': model, 'args': train_config, 'train_dataset': dataset}
     if lora_config is not None:
         trainer_kwargs['peft_config'] = lora_config
     try:

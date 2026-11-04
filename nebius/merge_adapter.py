@@ -10,10 +10,7 @@ def merge_adapter(base_model: str, adapter_dir: Path, output_dir: Path) -> None:
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
     model = AutoModelForCausalLM.from_pretrained(
-        base_model,
-        torch_dtype=torch.bfloat16,
-        device_map='auto',
-        trust_remote_code=True,
+        base_model, torch_dtype=torch.bfloat16, device_map='auto', trust_remote_code=True
     )
     model = PeftModel.from_pretrained(model, adapter_dir)
     merged = model.merge_and_unload()

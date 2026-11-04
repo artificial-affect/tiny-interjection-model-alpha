@@ -3,15 +3,15 @@ from __future__ import annotations
 import json
 import subprocess
 import urllib.request
-from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
+from pathlib import Path
+from dataclasses import dataclass
 
-from .data import is_backchannel, is_correction_or_redirect, is_incomplete_text
 from .format import build_prompt
-from .parser import parse_target, parse_target_or_wait, target_to_text
 from .schema import Event, Target
 from .train import DEFAULT_MODEL, load_model, load_tokenizer
+from .parser import parse_target, parse_target_or_wait, target_to_text
+from .data import is_backchannel, is_correction_or_redirect, is_incomplete_text
 
 
 @dataclass(frozen=True)
@@ -21,14 +21,7 @@ class Decision:
     mode: str
 
 
-def call_llama_cli(
-    *,
-    executable: Path,
-    model_path: Path,
-    adapter_path: Path,
-    prompt: str,
-    max_new_tokens: int,
-):
+def call_llama_cli(*, executable: Path, model_path: Path, adapter_path: Path, prompt: str, max_new_tokens: int):
     result = subprocess.run(
         [
             str(executable),
@@ -78,9 +71,7 @@ def _post_ollama(url: str, endpoint: str, payload: dict[str, Any], *, num_predic
         'options': {'temperature': 0, 'seed': 1, 'num_ctx': 4096, 'num_predict': num_predict},
     }
     request = urllib.request.Request(
-        f'{url}/api/{endpoint}',
-        data=json.dumps(payload).encode(),
-        headers={'content-type': 'application/json'},
+        f'{url}/api/{endpoint}', data=json.dumps(payload).encode(), headers={'content-type': 'application/json'}
     )
     with urllib.request.urlopen(request, timeout=120) as response:
         return json.load(response)
@@ -130,22 +121,13 @@ def heuristic_decision(events: tuple[Event, ...]) -> Decision:
             if is_backchannel(latest.text):
                 target = Target(action='continue', messages=('Continuing from the previous point.',))
             elif is_correction_or_redirect(latest.text):
-                target = Target(
-                    action='interject',
-                    messages=('Got it. I will adjust to the latest message.',),
-                )
+                target = Target(action='interject', messages=('Got it. I will adjust to the latest message.',))
             else:
-                target = Target(
-                    action='respond',
-                    messages=('Got it. I will respond to the latest message.',),
-                )
+                target = Target(action='respond', messages=('Got it. I will respond to the latest message.',))
         elif is_incomplete_text(latest.text):
             target = Target(action='wait', messages=())
         else:
-            target = Target(
-                action='respond',
-                messages=('Got it. Here is a focused response to the latest message.',),
-            )
+            target = Target(action='respond', messages=('Got it. Here is a focused response to the latest message.',))
     elif latest.role == 'assistant':
         target = Target(action='continue', messages=('Continuing with the next useful point.',))
     else:
@@ -216,10 +198,7 @@ class InteractionEngine:
 
         if self.ollama_model:
             raw = call_ollama(
-                url=self.ollama_url,
-                model=self.ollama_model,
-                prompt=build_prompt(events),
-                max_new_tokens=self.max_new_tokens,
+                url=self.ollama_url, model=self.ollama_model, prompt=build_prompt(events), max_new_tokens=self.max_new_tokens
             )
             return Decision(target=parse_target(raw), raw=raw, mode='ollama')
 

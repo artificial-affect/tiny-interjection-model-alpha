@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-import argparse
-import hashlib
 import json
+import hashlib
+import argparse
+from typing import Any
+from pathlib import Path
 from collections import Counter
 from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any
 
+from quality_candidates import quality_report
 from candidate_utils import (
     add_training_text,
     extract_json_object,
@@ -16,7 +17,6 @@ from candidate_utils import (
     quality_errors,
     validation_errors,
 )
-from quality_candidates import quality_report
 
 
 def sha256(path: Path) -> str:
@@ -121,12 +121,7 @@ Synthetic data can contain unrealistic dialogue, model biases, or timing artifac
 """
 
 
-def package_dataset(
-    input_path: Path,
-    output_dir: Path,
-    teacher_model: str,
-    validation_ratio: float,
-) -> dict[str, Any]:
+def package_dataset(input_path: Path, output_dir: Path, teacher_model: str, validation_ratio: float) -> dict[str, Any]:
     rows = load_rows(input_path)
     train, validation = split_rows(rows, validation_ratio)
     train_path = output_dir / 'data' / 'train.jsonl'
@@ -144,10 +139,7 @@ def package_dataset(
         'action_counts': counts(rows, 'action'),
         'timing_counts': counts(rows, 'timing_bucket'),
         'quality': quality_report(input_path),
-        'files': {
-            'data/train.jsonl': sha256(train_path),
-            'data/validation.jsonl': sha256(validation_path),
-        },
+        'files': {'data/train.jsonl': sha256(train_path), 'data/validation.jsonl': sha256(validation_path)},
     }
     metadata_path = output_dir / 'metadata' / 'manifest.json'
     metadata_path.parent.mkdir(parents=True, exist_ok=True)
@@ -185,12 +177,7 @@ def main() -> int:
         parser.error('--input is required unless --verify-only is set')
     if not 0 < args.validation_ratio < 1:
         raise ValueError('--validation-ratio must be between 0 and 1')
-    manifest = package_dataset(
-        args.input,
-        args.output_dir,
-        args.teacher_model,
-        args.validation_ratio,
-    )
+    manifest = package_dataset(args.input, args.output_dir, args.teacher_model, args.validation_ratio)
     print(json.dumps(manifest, indent=2, sort_keys=True))
     return 0
 

@@ -1,4 +1,12 @@
 {
+  "train": 598,
+  "validation": 104,
+  "validation_ratio": 0.15,
+  "teacher_model": "qwen3.5-397b-a17b",
+  "created_at": "2026-07-09T23:52:30.559121+00:00",
+  "timing_counts": { "quick": 172, "delayed": 174, "instant": 177, "natural": 179 },
+  "action_counts": { "wait": 176, "respond": 176, "continue": 175, "interject": 175 },
+  "source_sha256": "aa3f43ebdf377e27ea2ce87f68e0ef5a5d7fd24821075957fe49bd1e71f602d7",
   "files": {
     "data/train.jsonl": "50a085819713b3d39e9d9959f65bb19051f03b737b46f919fb06affe70cf4c9f",
     "data/validation.jsonl": "68771d6a1d0ea2e2aa0bb6dca3b27d048eacb1f7f4e74ce66c6b1d43c544f785"
@@ -13,13 +21,5 @@
     "short_target_rate": 0.0,
     "short_event_rate": 0.1339031339031339,
     "unique_last_user_ratio": 0.8433048433048433
-  },
-  "train": 598,
-  "validation": 104,
-  "validation_ratio": 0.15,
-  "teacher_model": "qwen3.5-397b-a17b",
-  "created_at": "2026-07-09T23:52:30.559121+00:00",
-  "timing_counts": { "quick": 172, "delayed": 174, "instant": 177, "natural": 179 },
-  "action_counts": { "wait": 176, "respond": 176, "continue": 175, "interject": 175 },
-  "source_sha256": "aa3f43ebdf377e27ea2ce87f68e0ef5a5d7fd24821075957fe49bd1e71f602d7"
+  }
 }

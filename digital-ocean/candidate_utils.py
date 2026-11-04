@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import hashlib
+import re
 import html
 import json
-import re
+import hashlib
 from typing import Any
 
 ACTIONS = ('wait', 'respond', 'interject', 'continue')
@@ -13,17 +13,9 @@ MAX_TEXT_CHARS = 1200
 MAX_EVENTS = 8
 WORD_RE = re.compile(r"[A-Za-z0-9']+")
 PLACEHOLDER_RE = re.compile(
-    r'\b(?:lorem ipsum|placeholder|example text|sample text|foo(?:\s+bar(?:\s+baz)?)?|xxx|todo)\b',
-    re.IGNORECASE,
+    r'\b(?:lorem ipsum|placeholder|example text|sample text|foo(?:\s+bar(?:\s+baz)?)?|xxx|todo)\b', re.IGNORECASE
 )
-META_MARKERS = (
-    'as an ai',
-    'json object',
-    'target action',
-    'training example',
-    '<conversation>',
-    '<act>',
-)
+META_MARKERS = ('as an ai', 'json object', 'target action', 'training example', '<conversation>', '<act>')
 
 
 def extract_json_object(text: str) -> dict[str, Any]:
@@ -95,12 +87,7 @@ def normalize_example(raw: dict[str, Any], *, source: str, case_id: str) -> dict
     if action == 'wait':
         messages = []
 
-    example = {
-        'events': events,
-        'target': {'action': action, 'messages': messages},
-        'source': source,
-        'case_id': case_id,
-    }
+    example = {'events': events, 'target': {'action': action, 'messages': messages}, 'source': source, 'case_id': case_id}
     timing_bucket = raw.get('timing_bucket')
     if isinstance(timing_bucket, str) and timing_bucket:
         example['timing_bucket'] = timing_bucket
@@ -254,10 +241,7 @@ def format_prompt(events: list[dict[str, Any]]) -> str:
         '<conversation>',
     ]
     for event in events:
-        attrs = [
-            f'role="{html.escape(event["role"], quote=True)}"',
-            f'dt_ms="{event["dt_ms"]}"',
-        ]
+        attrs = [f'role="{html.escape(event["role"], quote=True)}"', f'dt_ms="{event["dt_ms"]}"']
         if event.get('partial'):
             attrs.append('partial="true"')
         lines.append(f'<event {" ".join(attrs)}>{html.escape(event["text"])}</event>')

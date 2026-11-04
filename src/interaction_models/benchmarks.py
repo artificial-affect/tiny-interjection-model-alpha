@@ -22,11 +22,7 @@ def _assistant(text: str, dt_ms: int) -> Event:
 
 
 def _case(
-    case_id: str,
-    action: str,
-    *events: Event,
-    messages: tuple[str, ...] = (),
-    expected_contains: tuple[str, ...] = (),
+    case_id: str, action: str, *events: Event, messages: tuple[str, ...] = (), expected_contains: tuple[str, ...] = ()
 ) -> BenchCase:
     return BenchCase(
         case_id=case_id,

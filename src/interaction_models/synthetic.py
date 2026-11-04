@@ -44,10 +44,7 @@ QUESTION_ANSWERS = (
         'what is the clearest next step?',
         'The clearest next step is to run the verification gate and review any failed cases.',
     ),
-    (
-        'can you summarize the product update?',
-        'Yes - I can summarize the product update and preserve its key decisions.',
-    ),
+    ('can you summarize the product update?', 'Yes - I can summarize the product update and preserve its key decisions.'),
     (
         'what should the customer reply say?',
         'The customer reply should state the resolution clearly and give the customer a useful next step.',
@@ -84,16 +81,7 @@ AUDIENCES = (
     'the product council',
 )
 
-TONES = (
-    'warmer',
-    'more direct',
-    'less formal',
-    'more concise',
-    'more confident',
-    'friendlier',
-    'more urgent',
-    'calmer',
-)
+TONES = ('warmer', 'more direct', 'less formal', 'more concise', 'more confident', 'friendlier', 'more urgent', 'calmer')
 
 CORRECTION_PHRASES = (
     'actually make it for {audience}, and make it {tone}',
@@ -112,12 +100,7 @@ TONE_CORRECTION_PHRASES = (
     'I mean make it {tone}',
 )
 
-FORMATS = (
-    'two-line message',
-    'three-bullet note',
-    'single-paragraph update',
-    'brief text',
-)
+FORMATS = ('two-line message', 'three-bullet note', 'single-paragraph update', 'brief text')
 
 FORMAT_CORRECTION_PHRASES = (
     'never mind, turn it into a {format}',
@@ -139,30 +122,12 @@ INCOMPLETE_FRAGMENTS = (
 BACKCHANNELS = ('yeah', 'yep', 'ok', 'okay', 'right', 'mhm', 'uh huh')
 
 CONTINUATION_PAIRS = (
-    (
-        'First, frame the ask clearly.',
-        'Second, add the newest detail so the response matches the latest message.',
-    ),
-    (
-        'First, state the main decision.',
-        'Second, close with a clear next step.',
-    ),
-    (
-        'Option one is faster to test.',
-        'Second, option two gives stronger evidence.',
-    ),
-    (
-        'Stage one is local verification.',
-        'Second, move to a small neural LoRA run.',
-    ),
-    (
-        'Subject: Quick update',
-        'Second, add body copy with the decision and next step.',
-    ),
-    (
-        'The first check is schema validity.',
-        'Second, check the predicted action label.',
-    ),
+    ('First, frame the ask clearly.', 'Second, add the newest detail so the response matches the latest message.'),
+    ('First, state the main decision.', 'Second, close with a clear next step.'),
+    ('Option one is faster to test.', 'Second, option two gives stronger evidence.'),
+    ('Stage one is local verification.', 'Second, move to a small neural LoRA run.'),
+    ('Subject: Quick update', 'Second, add body copy with the decision and next step.'),
+    ('The first check is schema validity.', 'Second, check the predicted action label.'),
 )
 
 
@@ -182,10 +147,7 @@ def _respond_example(index: int, rng: random.Random) -> Example:
         second_text = f'{detail}, actually make it {tone}'
     else:
         second_text = f'{detail}, and make it {tone}'
-    events = (
-        Event(role='user', text=task, dt_ms=0),
-        Event(role='user', text=second_text, dt_ms=dt_ms),
-    )
+    events = (Event(role='user', text=task, dt_ms=0), Event(role='user', text=second_text, dt_ms=dt_ms))
     response = f'Got it - I will {task} and {detail}.'
     if variant not in {2, 4}:
         response = f'Got it - I will {task} and {detail}, with a {tone} tone.'
@@ -234,11 +196,7 @@ def _interject_example(index: int, rng: random.Random) -> Example:
     events = (
         Event(role='user', text=task, dt_ms=0),
         Event(role='assistant', text=assistant_start, dt_ms=rng.randrange(500, 1_200)),
-        Event(
-            role='user',
-            text=correction,
-            dt_ms=rng.randrange(300, 1_800),
-        ),
+        Event(role='user', text=correction, dt_ms=rng.randrange(300, 1_800)),
     )
     response = f"I'll make it {tone}."
     if format_only:

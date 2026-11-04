@@ -1,17 +1,12 @@
 import json
 import unittest
 from pathlib import Path
-from types import SimpleNamespace
 from unittest.mock import patch
+from types import SimpleNamespace
 
-from interaction_models.inference import (
-    InteractionEngine,
-    call_llama_cli,
-    call_ollama,
-    call_ollama_chat,
-)
-from interaction_models.parser import TargetParseError
 from interaction_models.schema import Event
+from interaction_models.parser import TargetParseError
+from interaction_models.inference import InteractionEngine, call_llama_cli, call_ollama, call_ollama_chat
 
 
 class LlamaInferenceTest(unittest.TestCase):
@@ -37,9 +32,7 @@ class LlamaInferenceTest(unittest.TestCase):
     def test_engine_uses_llama_cli_without_loading_transformers(self, llama_cli):
         llama_cli.return_value = '<act>interject</act>\n<msg>Switching now.</msg>\n<done/>'
         engine = InteractionEngine(
-            llama_cli_path=Path('llama-cli'),
-            llama_model_path=Path('base.gguf'),
-            llama_adapter_path=Path('adapter.gguf'),
+            llama_cli_path=Path('llama-cli'), llama_model_path=Path('base.gguf'), llama_adapter_path=Path('adapter.gguf')
         )
 
         decision = engine.decide(
@@ -58,12 +51,7 @@ class LlamaInferenceTest(unittest.TestCase):
         response = urlopen.return_value.__enter__.return_value
         response.read.return_value = b'{"response":"<act>wait</act>\\n<done/>"}'
 
-        raw = call_ollama(
-            url='http://127.0.0.1:11434',
-            model='tim',
-            prompt='events',
-            max_new_tokens=99,
-        )
+        raw = call_ollama(url='http://127.0.0.1:11434', model='tim', prompt='events', max_new_tokens=99)
 
         request = urlopen.call_args.args[0]
         body = json.loads(request.data)

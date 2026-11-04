@@ -1,14 +1,14 @@
 from __future__ import annotations
 
+import time
 import argparse
 import subprocess
-import time
 import urllib.request
 from pathlib import Path
 
-from .inference import InteractionEngine, call_ollama_chat
 from .schema import Event
 from .train import DEFAULT_MODEL
+from .inference import InteractionEngine, call_ollama_chat
 
 
 def ensure_ollama(url: str, executable: Path | None):
@@ -21,10 +21,7 @@ def ensure_ollama(url: str, executable: Path | None):
                 if executable is None:
                     raise RuntimeError('Ollama is not running and no CLI was provided.')
                 subprocess.Popen(
-                    [str(executable), 'serve'],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    start_new_session=True,
+                    [str(executable), 'serve'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True
                 )
             time.sleep(0.5)
     raise RuntimeError('Ollama did not become ready within 30 seconds.')
@@ -104,13 +101,7 @@ def main() -> None:
             print('reset')
             continue
         if raw.startswith('/assistant '):
-            events.append(
-                Event(
-                    role='assistant',
-                    text=raw[len('/assistant ') :].strip(),
-                    dt_ms=dt_ms,
-                )
-            )
+            events.append(Event(role='assistant', text=raw[len('/assistant ') :].strip(), dt_ms=dt_ms))
         else:
             events.append(Event(role='user', text=raw.strip(), dt_ms=dt_ms))
 
@@ -118,11 +109,7 @@ def main() -> None:
             decision = engine.decide(tuple(events))
             response = None
             if decision.target.action != 'wait' and args.ollama_model:
-                response = call_ollama_chat(
-                    url=args.ollama_url,
-                    model=args.ollama_model,
-                    events=tuple(events),
-                )
+                response = call_ollama_chat(url=args.ollama_url, model=args.ollama_model, events=tuple(events))
             print_demo_decision(decision, response)
             if response:
                 events.append(Event(role='assistant', text=response, dt_ms=0))

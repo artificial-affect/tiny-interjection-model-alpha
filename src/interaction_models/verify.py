@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import argparse
 import json
-from pathlib import Path
+import argparse
 from typing import Any
+from pathlib import Path
 
 
 class VerificationError(AssertionError):
@@ -84,11 +84,7 @@ def verify_report(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description='Verify TIM eval report thresholds.')
-    parser.add_argument(
-        '--report-file',
-        type=Path,
-        default=Path('runs/qwen3-4b-instruct-2507/eval.json'),
-    )
+    parser.add_argument('--report-file', type=Path, default=Path('runs/qwen3-4b-instruct-2507/eval.json'))
     parser.add_argument('--suite', default='doubletextbench')
     parser.add_argument('--model-key', default='adapter')
     parser.add_argument('--min-total', type=int, default=40)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any, Literal
+from dataclasses import dataclass
 
 Action = Literal['wait', 'respond', 'interject', 'continue']
 Role = Literal['system', 'user', 'assistant']
@@ -74,11 +74,7 @@ def target_to_dict(target: Target) -> dict[str, Any]:
 
 
 def event_to_dict(event: Event) -> dict[str, Any]:
-    data: dict[str, Any] = {
-        'role': event.role,
-        'text': event.text,
-        'dt_ms': event.dt_ms,
-    }
+    data: dict[str, Any] = {'role': event.role, 'text': event.text, 'dt_ms': event.dt_ms}
     if event.event_id is not None:
         data['event_id'] = event.event_id
     if event.partial:

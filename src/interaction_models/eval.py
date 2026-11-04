@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-import argparse
-import json
 import re
-from pathlib import Path
+import json
+import argparse
 from typing import Any
+from pathlib import Path
 
-from .benchmarks import DOUBLE_TEXT_BENCH, BenchCase, map_semantic_turn_action
-from .inference import InteractionEngine
 from .io import read_jsonl
+from .train import DEFAULT_MODEL
+from .inference import InteractionEngine
 from .parser import TargetParseError, parse_target
 from .schema import Event, Target, event_from_dict
-from .train import DEFAULT_MODEL
+from .benchmarks import DOUBLE_TEXT_BENCH, BenchCase, map_semantic_turn_action
 
 WORD_RE = re.compile(r'[a-z0-9]+')
 

@@ -222,8 +222,7 @@ curl -L --fail --retry 5 \
   https://huggingface.co/lmstudio-community/Qwen3-4B-Instruct-2507-GGUF/resolve/4edb920b6f14e3b9284d4502a6485103d72cde05/Qwen3-4B-Instruct-2507-Q4_K_M.gguf
 ```
 
-Keep incomplete downloads suffixed with `.partial` until their full size and hash have been verified, then rename the verified file to remove that suffix.
-The expected SHA-256 is `8cdb57cbb880d313736a9bc4e3d3d2485f145b5e19cf33783746e753e82641fc`.
+Keep incomplete downloads suffixed with `.partial` until their full size and hash have been verified, then rename the verified file to remove that suffix. The expected SHA-256 is `8cdb57cbb880d313736a9bc4e3d3d2485f145b5e19cf33783746e753e82641fc`.
 
 Start the FastAPI service after placing a trained PEFT adapter in `adapters/qwen3-4b-instruct-2507`:
 
