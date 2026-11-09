@@ -16,7 +16,6 @@ adapters/*
 *.pt
 *.gguf
 
-# Local secrets and deployment credentials
 .env
 .env.*
 !.env.example
