@@ -8,8 +8,7 @@ ADAPTER_DIR ?= adapters/qwen3-4b-instruct-2507
 LLAMA_CLI ?= llama-cli
 LLAMA_MODEL ?= runs/local-llama/Qwen3-4B-Instruct-2507-Q4_K_M.gguf
 LLAMA_ADAPTER ?= runs/local-llama/tim-lora-f16.gguf
-MYCLI ?= mycli
-OLLAMA_CLI ?= $(shell $(MYCLI) path ollama)
+OLLAMA_CLI ?= $(HOME)/.local/bin/ollama
 
 .PHONY: setup data data-public train eval-base eval-adapter verify serve cli cli-heuristic cli-llama demo test clean
 

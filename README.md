@@ -193,7 +193,7 @@ See [nebius/README.md](nebius/README.md) for setup, monitoring, and security det
 
 ## Demo
 
-Run the Ollama-backed interactive demo. The command resolves the managed Ollama CLI through `mycli` and starts the local Ollama service when needed:
+Run the Ollama-backed interactive demo. The command uses the Ollama CLI at `~/.local/bin/ollama` and starts the local Ollama service when needed:
 
 ```bash
 make demo
